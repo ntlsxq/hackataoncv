@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cv-gen
+    restart: always
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=support_chat
+      - DB_USER=support_chat_user
+      - DB_PASSWORD=secure_password_here
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+    volumes:
+      - ./media:/app/media
+    networks:
+      - app-network
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: cv-gen-postgres
+    restart: always
+    environment:
+      - POSTGRES_DB=cv
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - app-network
+
+  migrations:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cv-gen-migrations
+    restart: "no"
+    depends_on:
+      - postgres
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=support_chat
+      - DB_USER=support_chat_user
+      - DB_PASSWORD=secure_password_here
+    command: migrate
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+    driver: local

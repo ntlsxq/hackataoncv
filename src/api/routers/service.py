@@ -2,6 +2,6 @@ from fastapi import APIRouter
 
 router = APIRouter()
 
-@router.get("/")
+@router.get("/ping")
 async def test():
-    return {"message": "Hello World"}
+    return "pong"

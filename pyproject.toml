@@ -5,10 +5,16 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "alembic>=1.17.1",
     "asyncpg>=0.30.0",
+    "authlib>=1.6.5",
+    "bcrypt>=5.0.0",
     "fastapi>=0.121.0",
     "greenlet>=3.2.4",
+    "httpx>=0.28.1",
     "pydantic-settings>=2.11.0",
+    "pydantic[email]>=2.12.4",
+    "pyjwt>=2.10.1",
     "ruff>=0.14.4",
     "sqlalchemy>=2.0.44",
     "uvicorn>=0.38.0",

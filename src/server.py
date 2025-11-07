@@ -1,11 +1,11 @@
 import logging
 from fastapi import FastAPI, Depends, Request
 from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.middleware.cors import CORSMiddleware
 
 from .database import engine, Base, get_db
-from .api.routers import test as test_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -31,20 +31,10 @@ app.add_middleware(
 
 
 
-
+from .api.routers import service as service_router
+from .api.routers import auth as auth_router
+from .api import error_handler
 # Include routers
-app.include_router(test_router.router, prefix="/api", tags=["chat"])
-
-
-@app.on_event("startup")
-async def startup_event():
-    # Create database tables
-    logger.info("Creating database tables if they don't exist")
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-
-
-@app.get("/")
-async def root():
-    return {"message": "Support Chat API"}
+app.add_exception_handler(RequestValidationError, error_handler.validation_exception_handler)
+app.include_router(service_router.router, prefix="/api", tags=["service"])
+app.include_router(auth_router.router, prefix="/api", tags=["auth"])

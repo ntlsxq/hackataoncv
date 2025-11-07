@@ -16,19 +16,20 @@ class UserService:
     @staticmethod
     def user_model_to_schema(user: models.User) -> schemas.User:
         return schemas.User(id=user.id,
+                            name=user.name,
                             email=user.email)
 
     async def get(self, user_id: uuid.UUID) -> Optional[schemas.User]:
         user = await self.user_repository.get_by_id(user_id)
         return user
 
-    async def register_user(self, email: str, password: str) -> schemas.User:
+    async def register_user(self, name: str, email: str, password: str) -> schemas.User:
         existing_user = await self.user_repository.get_by_email(email)
         if existing_user:
             raise ValueError("User with this email already exists.")
 
         hashed_password = self._hash_password(password)
-        user = await self.user_repository.create(email=email, password=hashed_password)
+        user = await self.user_repository.create(name=name, email=email, password=hashed_password)
         return self.user_model_to_schema(user)
 
     async def authenticate_user(self, email: str, password: str) -> Optional[models.User]:
@@ -53,12 +54,15 @@ class UserService:
         new_user = await self.user_repository.create(email=email, password=hashed_password)
         return self.user_model_to_schema(new_user)
 
-    async def register_or_login_google(self, email: str) -> schemas.User:
+    async def register_or_login_google(self,
+                                       name: str,
+                                       email: str) -> schemas.User:
         user = await self.user_repository.get_by_email(email)
         if user:
             return self.user_model_to_schema(user)
 
         new_user = await self.user_repository.create(
+            name=name,
             email=email,
             password=None
         )

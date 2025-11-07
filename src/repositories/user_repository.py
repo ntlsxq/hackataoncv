@@ -21,8 +21,8 @@ class UserRepository:
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
-    async def create(self, email: str, password: str | None) -> models.User:
-        user = models.User(email=email, password=password)
+    async def create(self, name:str, email: str, password: str | None) -> models.User:
+        user = models.User(name=name, email=email, password=password)
         self.session.add(user)
         await self.session.commit()
         await self.session.refresh(user)

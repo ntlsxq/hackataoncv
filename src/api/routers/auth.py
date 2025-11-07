@@ -119,6 +119,7 @@ async def google_callback(
             )
 
     user = await user_service.register_or_login_google(
+        name=user_info["name"],
         email=user_info["email"],
     )
 

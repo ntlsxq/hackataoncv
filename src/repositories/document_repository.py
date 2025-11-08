@@ -19,7 +19,7 @@ class DocumentRepository:
     ) -> models.Document:
         doc = models.Document(owner_id=owner_id, current_version=1)
         self.session.add(doc)
-        await self.session.flush()  # нужен id
+        await self.session.flush()
 
         version = models.DocumentVersion(
             document_id=doc.id,

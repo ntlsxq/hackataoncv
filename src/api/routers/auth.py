@@ -78,7 +78,7 @@ async def me(user: User = Depends(get_current_user),
 async def google_login():
     params = {
         "client_id": settings.GOOGLE_AUTH_CLIENT_ID,
-        "redirect_uri": f"http://localhost:5173/google/callback/",
+        "redirect_uri": f"{settings.DOMAIN}/google/callback/",
         "response_type": "code",
         "scope": "openid email profile",
         "access_type": "offline",
@@ -102,7 +102,7 @@ async def google_callback(
         "code": code,
         "client_id": settings.GOOGLE_AUTH_CLIENT_ID,
         "client_secret": settings.GOOGLE_AUTH_SECRET,
-        "redirect_uri": f"http://localhost:5173/google/callback/",
+        "redirect_uri": f"{settings.DOMAIN}/google/callback/",
         "grant_type": "authorization_code",
     }
 

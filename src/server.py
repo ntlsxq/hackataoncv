@@ -34,9 +34,11 @@ app.add_middleware(
 from .api.routers import service as service_router
 from .api.routers import auth as auth_router
 from .api.routers import documents as documents_router
+from .api.routers import interview as interview_router
 from .api import error_handler
 # Include routers
 app.add_exception_handler(RequestValidationError, error_handler.validation_exception_handler)
 app.include_router(service_router.router, prefix="/api", tags=["service"])
 app.include_router(auth_router.router, prefix="/api", tags=["auth"])
 app.include_router(documents_router.router, prefix="/api", tags=["documents"])
+app.include_router(interview_router.router, prefix="/api", tags=["interview"])

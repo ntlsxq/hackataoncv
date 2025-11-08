@@ -29,6 +29,7 @@ async def register(
 ):
     try:
         created_user = await user_service.register_user(
+            name=user.name,
             email=user.email,
             password=user.password
         )
@@ -67,12 +68,17 @@ async def login(
 async def me(user: User = Depends(get_current_user)):
     return user
 
+@router.delete("/me", response_model=User)
+async def me(user: User = Depends(get_current_user),
+             user_service: UserService = Depends(get_user_service)):
+    await user_service.delete(user.id)
+    return True
 
 @router.get("/google/login")
 async def google_login():
     params = {
         "client_id": settings.GOOGLE_AUTH_CLIENT_ID,
-        "redirect_uri": f"{settings.DOMAIN}/api/auth/google/callback/",
+        "redirect_uri": f"http://localhost:5173/google/callback/",
         "response_type": "code",
         "scope": "openid email profile",
         "access_type": "offline",
@@ -96,7 +102,7 @@ async def google_callback(
         "code": code,
         "client_id": settings.GOOGLE_AUTH_CLIENT_ID,
         "client_secret": settings.GOOGLE_AUTH_SECRET,
-        "redirect_uri": f"{settings.DOMAIN}/api/auth/google/callback/",
+        "redirect_uri": f"http://localhost:5173/google/callback/",
         "grant_type": "authorization_code",
     }
 

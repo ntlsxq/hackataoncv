@@ -1,6 +1,7 @@
 import uuid
 
 from sqlalchemy import Column, String, UUID
+from sqlalchemy.orm import relationship
 
 from src.database import Base
 
@@ -13,4 +14,6 @@ class User(Base):
     name = Column(String, default="Anonymous")
     email = Column(String, unique=True, index=True)
     password = Column(String, nullable=True)
+
+    documents = relationship("Document", back_populates="owner_user")
 

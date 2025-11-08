@@ -23,6 +23,10 @@ class UserService:
         user = await self.user_repository.get_by_id(user_id)
         return user
 
+    async def delete(self, user_id: uuid.UUID) -> bool:
+        await self.user_repository.delete(user_id)
+        return True
+
     async def register_user(self, name: str, email: str, password: str) -> schemas.User:
         existing_user = await self.user_repository.get_by_email(email)
         if existing_user:
@@ -76,6 +80,8 @@ class UserService:
 
     @staticmethod
     def _verify_password(plain_password: str, hashed_password: str) -> bool:
+        if not hashed_password or not plain_password:
+            return False
         return bcrypt.checkpw(
             plain_password.encode("utf-8"),
             hashed_password.encode("utf-8")

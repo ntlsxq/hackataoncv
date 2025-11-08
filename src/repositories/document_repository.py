@@ -77,6 +77,37 @@ class DocumentRepository:
         await self.session.refresh(document)
         return document
 
+    async def update_version(
+            self,
+            document: models.Document,
+            content: Dict[str, Any],
+            version_number: Optional[int] = None,
+    ) -> models.DocumentVersion:
+        if version_number is None:
+            version_number = document.current_version
+
+        stmt = (
+            select(models.DocumentVersion)
+            .where(
+                models.DocumentVersion.document_id == document.id,
+                models.DocumentVersion.version_number == version_number,
+            )
+        )
+        version = await self.session.scalar(stmt)
+
+        if version is None:
+            raise ValueError(
+                f"Version {version_number} for document {document.id} not found"
+            )
+
+        version.content = content
+
+        self.session.add(version)
+        await self.session.commit()
+        await self.session.refresh(version)
+
+        return version
+
     async def delete(self, document_id: UUID) -> None:
         doc = await self.get_by_id(document_id)
         if doc:

@@ -1,4 +1,6 @@
-from typing import List, Dict
+import json
+import re
+from typing import List, Dict, Tuple
 import asyncio
 
 from google import genai
@@ -34,10 +36,16 @@ async def _generate_with_gemini(
     return response.text
 
 
+from typing import List, Dict
+
 async def generate_interview_reply(
     messages: List[Dict[str, str]],
     model: str | None = None,
 ) -> str:
+    has_assistant_messages = any(m.get("role") == "assistant" for m in messages)
+
+    if not has_assistant_messages:
+        return "Hello! What position are you applying for?"
 
     if model is None:
         model = getattr(settings, "GEMINI_MODEL", "gemini-2.5-flash")
@@ -107,3 +115,58 @@ async def generate_chat_title(
     )
 
     return title.strip()
+
+
+async def score_resume_json(
+    resume: dict | list | str,
+) -> Tuple[int, str]:
+    model = getattr(settings, "GEMINI_MODEL", "gemini-2.5-flash")
+
+    if isinstance(resume, (dict, list)):
+        resume_json_str = json.dumps(resume, ensure_ascii=False, indent=2)
+    else:
+        resume_json_str = str(resume)
+
+    system_instruction = (
+        "You are a strict technical recruiter. "
+        "You will receive a candidate's resume as JSON. "
+        "Evaluate the overall quality of the candidate and their suitability "
+        "for a strong software engineering role on a scale from 1 to 100. "
+        "1 = very poor candidate, 100 = outstanding candidate.\n\n"
+        "Respond ONLY with a JSON object of the form:\n"
+        '{"score": <integer 1-100>, "reason": "<short explanation>"}\n'
+        "Do not include any other text, no markdown, no code fences."
+    )
+
+    prompt = (
+        "Here is the candidate resume as JSON:\n"
+        f"```json\n{resume_json_str}\n```"
+    )
+
+    raw = await _generate_with_gemini(
+        model=model,
+        system_instruction=system_instruction,
+        prompt=prompt,
+        temperature=0.2,
+    )
+
+    text = raw.strip()
+
+    json_match = re.search(r"\{.*\}", text, re.DOTALL)
+    if not json_match:
+        raise ValueError(f"Cannot find JSON in Gemini response: {text!r}")
+
+    try:
+        data = json.loads(json_match.group(0))
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Cannot parse JSON from Gemini response: {text!r}") from e
+
+    if "score" not in data:
+        raise ValueError(f"No 'score' field in Gemini response: {data!r}")
+
+    score = int(data["score"])
+    score = max(1, min(100, score))
+
+    reason = str(data.get("reason", "")).strip()
+
+    return score, reason

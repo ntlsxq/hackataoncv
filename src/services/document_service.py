@@ -1,9 +1,11 @@
+import asyncio
 from typing import Optional, Dict, Any, List
 from uuid import UUID
 
 from src import models
 from src.schemas import document_schemas as schemas
 from src.repositories.document_repository import DocumentRepository
+from src.utils import ai
 
 
 class DocumentService:
@@ -61,6 +63,22 @@ class DocumentService:
             content=version.content,
             created_at=version.created_at,
         )
+    async def score_document(self,
+                             document_id: UUID):
+        doc = await self.document_repository.get_by_id(document_id)
+        if not doc:
+            return None
+        content = doc.versions[doc.current_version - 1].content
+        score, reason = await ai.score_resume_json(content)
+        scored_content = {**content, "aimark": score, "reason": reason}
+
+        await self.document_repository.update_version(
+            document=doc,
+            content=scored_content,
+            version_number=doc.current_version,
+        )
+
+        return
 
     async def update_document(
         self,
@@ -75,6 +93,8 @@ class DocumentService:
             document=doc,
             content=content,
         )
+
+        asyncio.create_task(self.score_document(document_id))
         return self._document_to_schema(doc)
 
     async def delete_document(self, document_id: UUID) -> bool:
